@@ -1,6 +1,8 @@
+// https://ionicframework.com/docs/native/in-app-browser
+
 export class Customization {
   // name of page to navigate to from overview (the essential page of the app)
-  public static vendorPage: string = 'VendorHeatingPage';
+  public static vendorPage: string = 'WebViewPage';
 
   // supported device interface - only interact with devices that match exactly this
   public static interfaceId: string = '317aadf2-3137-474b-8ddb-fea437c424f4';

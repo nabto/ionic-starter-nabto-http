@@ -10,10 +10,10 @@ declare var NabtoError;
 
 @IonicPage()
 @Component({
-  selector: 'page-vendor-heating',
-  templateUrl: 'vendor-heating.html'
+  selector: 'page-web-view',
+  templateUrl: 'web-view.html'
 })
-export class VendorHeatingPage {
+export class WebViewPage {
   
   device: NabtoDevice;
   busy: boolean;
