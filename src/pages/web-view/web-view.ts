@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { NavController, NavParams } from 'ionic-angular';
 import { ToastController } from 'ionic-angular';
 import { LoadingController } from 'ionic-angular';
 import { ModalController } from 'ionic-angular';
 import { NabtoDevice } from '../../app/device.class';
 import { NabtoService } from '../../app/nabto.service';
+import { InAppBrowser, InAppBrowserOptions } from '@ionic-native/in-app-browser';
 
 declare var NabtoError;
 
@@ -14,198 +15,113 @@ declare var NabtoError;
   templateUrl: 'web-view.html'
 })
 export class WebViewPage {
-  
+
   device: NabtoDevice;
-  busy: boolean;
-  activated: boolean;
-  offline: boolean;
-  temperature: number;
-  mode: string;
-  roomTemperature: number;
-  maxTemp: number;
-  minTemp: number;
   timer: any;
   spinner: any;
-  unavailableStatus: string;
-  firstView: boolean = true;
+  tunnel: string;
+  remotePort: number = 8081;
+  showSpinner: boolean = true;
+  browser: any = null;
+  tunnelIsOk: boolean;
 
   constructor(private navCtrl: NavController,
               private nabtoService: NabtoService,
               private toastCtrl: ToastController,
               private loadingCtrl: LoadingController,
               private navParams: NavParams,
-              private modalCtrl: ModalController) {
+              private modalCtrl: ModalController,
+              private iab: InAppBrowser,
+              private _ngZone: NgZone) {
     this.device = navParams.get('device');
-    this.temperature = undefined;
-    this.activated = false;
-    this.offline = true;
-    this.mode = undefined;
-    this.maxTemp = 30;
-    this.minTemp = 16;
+//    this.device = new NabtoDevice("foo", "w3.test.nabto.net", "tunnel", "foo", "foo", false, false, false);
     this.timer = undefined;
-    this.busy = false;
+    this.setTunnelOk(true);
+  }
+
+  ionViewDidEnter() {
+    this.showStream();
   }
 
   ionViewDidLoad() {
-    this.refresh();
-  }
-  
-  ionViewDidEnter() {
-    if (!this.firstView) {
-      this.refresh();
-    } else {
-      // first time we enter the page, just show the values populated
-      // during load (to not invoke device again a few milliseconds
-      // after load)
-      this.firstView = false;
-    }
+    this.setTunnelOk(true);
   }
 
-  refresh() {
-    this.busyBegin();
-    this.nabtoService.invokeRpc(this.device.id, "heatpump_get_full_state.json").
-      then((state: any) => {
-        this.busyEnd();
-        console.log(`Got new heatpump state: ${JSON.stringify(state)}`);
-        this.activated = state.activated;
-        this.offline = false;
-        this.mode = this.mapDeviceMode(state.mode);
-        this.temperature = this.mapDeviceTemp(state.target_temperature);
-        this.roomTemperature = state.room_temperature;
-        if (!this.activated) {
-          this.unavailableStatus = "Powered off";
-        }
-        console.log(`offline=${this.offline}, activated=${this.activated}`);
-      }).catch(error => {
-        this.busyEnd();
-        this.handleError(error);
+
+  setTunnelOk(state: boolean) {
+    this.tunnelIsOk = state;
+  }
+
+  ionViewWillLeave() {
+    this.nabtoService.closeTunnel(this.tunnel)
+      .then(() => {
+        console.log(`Tunnel ${this.tunnel} closed`);
+      })
+      .catch(() => {
+        console.log(`Error: Tunnel ${this.tunnel} could not be closed`);
       });
   }
 
-  activationToggled() {
-    console.log("Activation toggled - state is now " + this.activated);
-    this.busyBegin();
-    this.nabtoService.invokeRpc(this.device.id, "heatpump_set_activation_state.json",
-                                { "activated": this.activated ? 1 : 0 }).
-      then((state: any) => {
-        this.busyEnd();
-        this.activated = state.activated;
-        if (!this.activated) {
-          this.unavailableStatus = "Powered off";
-        }
+  showStream() {
+    this.nabtoService.openTunnel(this.device.id, this.remotePort)
+      .then((res: any) => {
+        console.log(`Tunnel ${res.tunnelId} connected, portnum is ${res.localPort}, state is ${res.state}`);
+        this.tunnel = res.tunnelId;
+        //        const browser = this.iab.create('http://127.0.0.1:${res.localPort}/index.html/');
+        let options : InAppBrowserOptions = {
+          location : 'yes',//Or 'no'
+          hidden : 'yes', //Or  'yes'
+          clearcache : 'yes',
+          clearsessioncache : 'yes',
+          zoom : 'yes',//Android only ,shows browser zoom controls
+          hardwareback : 'yes',
+          mediaPlaybackRequiresUserAction : 'no',
+          shouldPauseOnSuspend : 'no', //Android only
+          closebuttoncaption : 'Close', //iOS only
+          disallowoverscroll : 'no', //iOS only
+          toolbar : 'yes', //iOS only
+          enableViewportScale : 'no', //iOS only
+          allowInlineMediaPlayback : 'no',//iOS only
+          presentationstyle : 'pagesheet',//iOS only
+          fullscreen : 'yes',//Windows only
+        };
+        this.browser = this.iab.create(`http://127.0.0.1:${res.localPort}/index.html`, '_blank', options);
+        this.setupListeners();
       }).catch(error => {
-        this.busyEnd();
-        this.handleError(error);
-      });
-  }
-  
-  busyBegin() {
-    if (!this.busy) {
-      this.busy = true;
-      this.timer = setTimeout(() => this.showSpinner(), 500);
-    }
-  }
-
-  busyEnd() {
-    this.busy = false;
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = undefined;
-    }
-    if (this.spinner) {
-      this.spinner.dismiss();
-      this.spinner = undefined;
-    }
-  }
-  
-  tempChanged(temp) {
-    console.log(`Temperature changed - value is now ${this.temperature}, event temp is ${temp}`);
-    this.temperature = temp;
-    this.updateTargetTemperature();
-  }
-
-  increment() {
-    if (this.activated) { // we cannot disable tap events on icon in html
-      if (this.temperature < this.maxTemp) {
-        this.temperature++;
-      }
-      this.updateTargetTemperature();
-    }
-  }
-
-  decrement() {
-    if (this.activated) { // we cannot disable tap events on icon in html
-      if (this.temperature > this.minTemp) {
-        this.temperature--;
-      }
-      this.updateTargetTemperature();
-    }
-  }
-
-  updateTargetTemperature() {
-    // XXX: no spinner as long as we don't debounce and invoke device every time (it yields odd behavior)
-    this.nabtoService.invokeRpc(this.device.id, "heatpump_set_target_temperature.json",
-                                { "temperature": this.temperature }).
-      then((state: any) => {
-        this.temperature = state.temperature;
-      }).catch(error => {
-        this.handleError(error);
+        this.setTunnelOk(false);
+        this.showSpinner = false;
+        this.showToast(error.message);
       });
   }
 
-  updateMode() {
-    this.busyBegin();
-    this.nabtoService.invokeRpc(this.device.id, "heatpump_set_mode.json",
-                                { "mode": this.mapToDeviceMode(this.mode) }).
-      then((state: any) => {
-        this.busyEnd();
-        this.mode = this.mapDeviceMode(state.mode);
-      }).catch(error => {
-        this.busyEnd();
-        this.handleError(error);
-      });
-    //});
-  }
-  
-  mapDeviceMode(mode: number) {
-    switch (mode) {
-    case 0: return "cool";
-    case 1: return "heat";
-    case 2: return "circulate";
-    case 3: return "dehumidify";
-    default: return "unknown";
-    }
+  setupListeners() {
+    this.browser.on('loadstop').subscribe(() => {
+      this.browserDone(true);
+      this.browser.show();
+    }, err => {
+      console.error(err);
+    });
+
+    this.browser.on('exit').subscribe(() => {
+      this.browser.close();
+    }, err => {
+      console.error(err);
+    });
+
+    this.browser.on('loaderror').subscribe(() => {
+      this.browserDone(false);
+      this.browser.close();
+    }, err => {
+      console.error(err);
+    });
+
   }
 
-  mapToDeviceMode(mode: string) {
-    switch (mode) {
-    case "cool": return 0;
-    case "heat": return 1;
-    case "circulate": return 2;
-    case "dehumidify": return 3;
-    default: return -1;
-    }
-  }
-
-  mapDeviceTemp(tempFromDevice: number) {
-    if (tempFromDevice < this.minTemp) {
-      return this.minTemp;
-    } else if (tempFromDevice > this.maxTemp) {
-      return this.maxTemp;
-    } else {
-      return tempFromDevice;
-    }
-  }
-
-  handleError(error: any) {
-    console.log(`Handling error: ${error.code}`);
-    if (error.code == NabtoError.Code.API_RPC_DEVICE_OFFLINE) {
-      this.unavailableStatus = "Device offline";
-      this.offline = true;
-    } else {
-      console.log("ERROR invoking device: " + JSON.stringify(error));
-    }
-    this.showToast(error.message);
+  browserDone(ok: boolean) {
+    this._ngZone.run(() => {
+      this.showSpinner = false;
+      this.setTunnelOk(ok);
+    });
   }
 
   showToast(message: string) {
@@ -218,13 +134,6 @@ export class WebViewPage {
     let toast = this.toastCtrl.create(opts);
     toast.present();
   }
-  
-  showSpinner() {
-    this.spinner = this.loadingCtrl.create({
-      content: "Invoking device...",
-    });
-    this.spinner.present();
-  }
 
   showSettingsPage() {
     this.navCtrl.push('DeviceSettingsPage', {
@@ -232,16 +141,18 @@ export class WebViewPage {
     });
   }
 
-  available() {
-    return this.activated && !this.offline;
-  }
-
-  unavailable() {
-    return !this.activated || this.offline;
-  }
-
   home() {
+    this.navCtrl.setRoot('OverviewPage');
     this.navCtrl.popToRoot();
   }
-  
+
+  reload() {
+    if (this.browser != null) {
+      this.browser.close();
+    }
+    this.nabtoService.closeTunnel(this.tunnel).then(() => {
+      this.showStream();
+    });
+  }
+
 }

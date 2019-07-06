@@ -5,7 +5,7 @@ export class Customization {
   public static vendorPage: string = 'WebViewPage';
 
   // supported device interface - only interact with devices that match exactly this
-  public static interfaceId: string = '317aadf2-3137-474b-8ddb-fea437c424f4';
+  public static interfaceId: string = '8eee78e7-8f22-4019-8cee-4dcbc1c8186c';
 
   // supported major version of the device interface - only interact with devices that match exactly this
   public static interfaceVersionMajor: number = 1;
