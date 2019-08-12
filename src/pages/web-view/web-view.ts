@@ -6,6 +6,7 @@ import { ModalController } from 'ionic-angular';
 import { NabtoDevice } from '../../app/device.class';
 import { NabtoService } from '../../app/nabto.service';
 import { InAppBrowser, InAppBrowserOptions } from '@ionic-native/in-app-browser';
+import { ClientSettings, SettingsService } from '../../app/settings.service';
 
 declare var NabtoError;
 
@@ -20,10 +21,10 @@ export class WebViewPage {
   timer: any;
   spinner: any;
   tunnel: string;
-  remotePort: number = 8081;
   showSpinner: boolean = true;
   browser: any = null;
   tunnelIsOk: boolean;
+  settings: ClientSettings;
 
   constructor(private navCtrl: NavController,
               private nabtoService: NabtoService,
@@ -32,6 +33,7 @@ export class WebViewPage {
               private navParams: NavParams,
               private modalCtrl: ModalController,
               private iab: InAppBrowser,
+              private settingsService: SettingsService,
               private _ngZone: NgZone) {
     this.device = navParams.get('device');
 //    this.device = new NabtoDevice("foo", "w3.test.nabto.net", "tunnel", "foo", "foo", false, false, false);
@@ -63,35 +65,37 @@ export class WebViewPage {
   }
 
   showStream() {
-    this.nabtoService.openTunnel(this.device.id, this.remotePort)
-      .then((res: any) => {
-        console.log(`Tunnel ${res.tunnelId} connected, portnum is ${res.localPort}, state is ${res.state}`);
-        this.tunnel = res.tunnelId;
-        //        const browser = this.iab.create('http://127.0.0.1:${res.localPort}/index.html/');
-        let options : InAppBrowserOptions = {
-          location : 'yes',//Or 'no'
-          hidden : 'yes', //Or  'yes'
-          clearcache : 'yes',
-          clearsessioncache : 'yes',
-          zoom : 'yes',//Android only ,shows browser zoom controls
-          hardwareback : 'yes',
-          mediaPlaybackRequiresUserAction : 'no',
-          shouldPauseOnSuspend : 'no', //Android only
-          closebuttoncaption : 'Close', //iOS only
-          disallowoverscroll : 'no', //iOS only
-          toolbar : 'yes', //iOS only
-          enableViewportScale : 'no', //iOS only
-          allowInlineMediaPlayback : 'no',//iOS only
-          presentationstyle : 'pagesheet',//iOS only
-          fullscreen : 'yes',//Windows only
-        };
-        this.browser = this.iab.create(`http://127.0.0.1:${res.localPort}/index.html`, '_blank', options);
-        this.setupListeners();
-      }).catch(error => {
-        this.setTunnelOk(false);
-        this.showSpinner = false;
-        this.showToast(error.message);
-      });
+    this.settingsService.readSettings().then((settings: ClientSettings) => {
+      this.nabtoService.openTunnel(this.device.id, settings.port)
+        .then((res: any) => {
+          console.log(`Tunnel ${res.tunnelId} connected, portnum is ${res.localPort}, state is ${res.state}`);
+          this.tunnel = res.tunnelId;
+          //        const browser = this.iab.create('http://127.0.0.1:${res.localPort}/index.html/');
+          let options : InAppBrowserOptions = {
+            location : 'yes',//Or 'no'
+            hidden : 'yes', //Or  'yes'
+            clearcache : 'yes',
+            clearsessioncache : 'yes',
+            zoom : 'yes',//Android only ,shows browser zoom controls
+            hardwareback : 'yes',
+            mediaPlaybackRequiresUserAction : 'no',
+            shouldPauseOnSuspend : 'no', //Android only
+            closebuttoncaption : 'Close', //iOS only
+            disallowoverscroll : 'no', //iOS only
+            toolbar : 'yes', //iOS only
+            enableViewportScale : 'no', //iOS only
+            allowInlineMediaPlayback : 'no',//iOS only
+            presentationstyle : 'pagesheet',//iOS only
+            fullscreen : 'yes',//Windows only
+          };
+          this.browser = this.iab.create(`http://127.0.0.1:${res.localPort}/${settings.path}`, '_blank', options);
+          this.setupListeners();
+        }).catch(error => {
+          this.setTunnelOk(false);
+          this.showSpinner = false;
+          this.showToast(error.message);
+        });
+    });
   }
 
   setupListeners() {
@@ -139,6 +143,10 @@ export class WebViewPage {
     this.navCtrl.push('DeviceSettingsPage', {
       device: this.device
     });
+  }
+
+  showTunnelSettingsPage() {
+    this.navCtrl.push('TunnelSettingsPage');
   }
 
   home() {

@@ -11,6 +11,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { HttpModule } from '@angular/http';
 import { BarcodeScanner } from '@ionic-native/barcode-scanner';
 import { InAppBrowser } from '@ionic-native/in-app-browser';
+import { SettingsService } from './settings.service';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { InAppBrowser } from '@ionic-native/in-app-browser';
     ProfileService,
     NabtoService,
     BookmarksService,
+    SettingsService,
     StatusBar,
     SplashScreen,
     BarcodeScanner,

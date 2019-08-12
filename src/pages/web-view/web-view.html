@@ -19,7 +19,7 @@
         Cannot show web application
       </ion-card-header>
       <ion-card-content>
-        Make sure the tunnnel is configured correctly, including that it allows connections to port {{remotePort}}.
+        Make sure the tunnnel is configured correctly, including that it allows connections to the configured port.
       </ion-card-content>
     </ion-card>
   </div>
@@ -28,9 +28,11 @@
   <button block ion-button (tap)="reload()" color="light">
     Load
   </button>
+  <button block ion-button icon-end (tap)="showTunnelSettingsPage()" color="light">
+    Tunnel settings (port, path)
+  </button>
   <button block ion-button icon-end (tap)="showSettingsPage()" color="light">
-    Settings
-    <ion-icon name="cog"></ion-icon>
+    General device settings
   </button>
 
 </ion-content>

@@ -1,0 +1,32 @@
+<ion-header>
+
+  <ion-navbar>
+    <ion-title>Tunnel Settings</ion-title>
+    <ion-buttons end>
+      <button ion-button icon-only (tap)="home()">
+        <ion-icon name="home" color="secondary"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-navbar>
+
+</ion-header>
+
+<ion-content padding>
+
+  <h2>HTTP service port number</h2>
+  <ion-list>
+    <ion-item>
+      <ion-label stacked>Enter the port number of the target HTTP service on the device (note! Nabto reverse proxy must have been configured to allow connections to this port!).</ion-label>
+      <ion-input required type="text" [(ngModel)]="settings.port" (blur)="saveSettings()"></ion-input>
+    </ion-item>
+  </ion-list>
+
+  <h2>App path</h2>
+  <ion-list>
+    <ion-item>
+      <ion-label stacked>Enter the path for the first page requested of the HTTP app on the device.</ion-label>
+      <ion-input required type="text" [(ngModel)]="settings.path" (blur)="saveSettings()"></ion-input>
+    </ion-item>
+  </ion-list>
+
+</ion-content>
