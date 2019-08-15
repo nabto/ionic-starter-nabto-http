@@ -6,9 +6,9 @@ import { NabtoDevice } from './device.class';
 
 // serializable with simple JSON parse/stringify
 export class ClientSettings {
-  public port: int;
+  public port: number;
   public path: string;
-  constructor(port: int,
+  constructor(port: number,
               path: string) {
     this.port = port;
     this.path = path;
@@ -30,7 +30,7 @@ export class SettingsService {
   constructor (private storage: Storage) {
   }
 
-  public readSettings(): Promise<Settings> {
+  public readSettings(): Promise<ClientSettings> {
     return this.storage.get(this.key).then((value:string) => {
       var settings: ClientSettings = new DefaultSettings();
       if (value) {

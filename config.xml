@@ -66,10 +66,7 @@
         <splash height="960" src="resources/ios/splash/Default@2x~iphone.png" width="640" />
         <splash height="480" src="resources/ios/splash/Default~iphone.png" width="320" />
         <config-file parent="ITSAppUsesNonExemptEncryption" platform="ios" target="*-Info.plist">
-            <true />
-        </config-file>
-        <config-file parent="ITSEncryptionExportComplianceCode" platform="ios" target="*-Info.plist">
-            <string>9a3f97dd-548b-4888-a979-22960283269e</string>
+            <false />
         </config-file>
         <edit-config file="*-Info.plist" mode="merge" target="NSCameraUsageDescription">
             <string>Scan QR code to add user to device access control list</string>
@@ -109,9 +106,9 @@
     <plugin name="phonegap-plugin-barcodescanner" spec="6.0.8">
         <variable name="CAMERA_USAGE_DESCRIPTION" value="Scan QR code to add user to device access control list" />
     </plugin>
-    <plugin name="cordova-plugin-nabto" spec="2.5.1" />
     <allow-navigation href="http://192.168.1.10:8100" sessionid="17088f1e" />
     <plugin name="cordova-plugin-inappbrowser" spec="3.0.0" />
+    <plugin name="cordova-plugin-nabto" spec="2.6.1" />
     <engine name="android" spec="8.0.0" />
-    <engine name="ios" spec="5.0.1" />
+    <engine name="ios" spec="4.5.5" />
 </widget>
