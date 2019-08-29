@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.appmyproduct.webview" ios-CFBundleVersion="2" version="1.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.appmyproduct.webview" ios-CFBundleVersion="2" version="1.0.2" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>AMPWebView</name>
     <description>AppMyProduct web tunnel app</description>
     <author email="support@appmyproduct.com" href="https://www.appmyproduct.com/">AppMyProduct Team</author>
-    <content src="index.html" />
+    <content original-src="index.html" src="http://192.168.1.24:8100" />
     <access origin="*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
@@ -108,6 +108,7 @@
     <plugin name="cordova-plugin-inappbrowser" spec="3.0.0" />
     <plugin name="cordova-plugin-nabto" spec="^2.6.2" />
     <plugin name="cordova-plugin-ionic-webview" spec="~4.1.1" />
+    <allow-navigation href="http://192.168.1.24:8100" sessionid="bf783a5d" />
     <engine name="android" spec="^8.0.0" />
     <engine name="ios" spec="5.0.1" />
 </widget>
